@@ -1,6 +1,7 @@
 # PostHog Java Client
 
 [![license](https://img.shields.io/github/license/hollow-cube/posthog-java.svg)](LICENSE)
+![native image supported](https://img.shields.io/badge/native--image-supported-blue)
 
 ## Features
 
@@ -158,8 +159,8 @@ done using `identify`, the following is equivalent.
 ```java
 public void sample() {
     PostHog.identify("distinct_id",
-            Map.of("name", "Max Hedgehog"), // $set
-            Map.of("initial_url", "/blog") // $set_once
+                     Map.of("name", "Max Hedgehog"), // $set
+                     Map.of("initial_url", "/blog") // $set_once
     );
 }
 ```

@@ -6,6 +6,7 @@ slf4j = "2.0.16"
 gson = "2.12.1"
 junit = "5.10.0"
 
+nativeimage = "0.10.6"
 nmcp = "1.0.0-rc.1"
 
 [libraries]
@@ -16,4 +17,5 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
 
 [plugins]
+nativeimage = { id = "org.graalvm.buildtools.native", version.ref = "nativeimage" }
 nmcp-aggregation = { id = "com.gradleup.nmcp.aggregation", version.ref = "nmcp" }

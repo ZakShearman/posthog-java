@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    alias(libs.plugins.nativeimage)
 
     `maven-publish`
     signing
@@ -27,11 +28,29 @@ java {
     withSourcesJar()
     withJavadocJar()
 
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+        nativeImageCapable = true
+    }
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+graalvmNative {
+    binaries {
+        named("test") {
+            buildArgs.addAll("--verbose", "-O0")
+        }
+    }
+
+    agent {
+        enabled = true
+
+        defaultMode = "standard"
+        trackReflectionMetadata = true
+    }
 }
 
 nmcpAggregation {
