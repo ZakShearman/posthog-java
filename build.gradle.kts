@@ -30,6 +30,7 @@ java {
 
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
+        vendor.set(JvmVendorSpec.GRAAL_VM)
         nativeImageCapable = true
     }
 }
