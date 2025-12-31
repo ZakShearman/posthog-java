@@ -86,17 +86,18 @@ public final class PostHogClientImpl implements PostHogClient {
         this.setPropertyIfAbsent(this.defaultEventProperties, LIB_VERSION, DEFAULT_LIBRARY_VERSION);
         this.eventBatchTimeout = eventBatchTimeout;
 
+        this.allowRemoteFeatureFlagEvaluation = allowRemoteFeatureFlagEvaluation;
+        this.sendFeatureFlagEvents = sendFeatureFlagEvents;
+        this.featureFlagsRequestTimeout = featureFlagsRequestTimeout;
+
+        this.exceptionMiddleware = exceptionMiddleware;
+
         // Always enable local evaluation with personal api key.
         if (this.personalApiKey != null) {
             this.featureFlagFetchTimer = new Timer(this::loadRemoteFeatureFlags, featureFlagsPollingInterval);
         } else if (!allowRemoteFeatureFlagEvaluation) {
             throw new IllegalArgumentException("Personal API key is required when remote feature flag evaluation is disabled");
         } else this.featureFlagFetchTimer = null;
-        this.allowRemoteFeatureFlagEvaluation = allowRemoteFeatureFlagEvaluation;
-        this.sendFeatureFlagEvents = sendFeatureFlagEvents;
-        this.featureFlagsRequestTimeout = featureFlagsRequestTimeout;
-
-        this.exceptionMiddleware = exceptionMiddleware;
     }
 
     @Override
