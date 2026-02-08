@@ -50,6 +50,7 @@ public final class PostHogClientImpl implements PostHogClient {
 
     private Map<String, FeatureFlagsResponse.Flag> featureFlags = null; // Null until first fetch
     private final Map<String, Object> recentlyCapturedFeatureFlags = new ConcurrentHashMap<>();
+    private volatile boolean warnedAboutMissingFlags = false;
     private final boolean allowRemoteFeatureFlagEvaluation;
     private final boolean sendFeatureFlagEvents;
     private final Duration featureFlagsRequestTimeout;
@@ -205,6 +206,12 @@ public final class PostHogClientImpl implements PostHogClient {
         // This occurs when local flags are not loaded and remote eval is disabled, so we return disabled
         // If a client wants, they can block until local values are loaded with PostHogClient#awaitFeatureFlags
         if (result == null) {
+            if (!warnedAboutMissingFlags) {
+                warnedAboutMissingFlags = true;
+                log.warn("Local feature flags not yet loaded and remote evaluation is disabled. " +
+                        "Returning DISABLED for all flags until loaded. " +
+                        "Use awaitFeatureFlags() or blockUntilLocalFlagsLoaded() to avoid this.");
+            }
             return FeatureFlagState.DISABLED;
         }
 

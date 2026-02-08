@@ -383,6 +383,7 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
         private boolean sendFeatureFlagEvents = false;
         private Duration featureFlagsPollingInterval = Duration.ofMinutes(5);
         private Duration featureFlagsRequestTimeout = Duration.ofSeconds(3);
+        private Duration blockUntilLocalFlagsLoaded = null;
 
         private BiFunction<Throwable, JsonObject, Boolean> exceptionMiddleware = null;
 
@@ -458,6 +459,24 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
             return this;
         }
 
+        /**
+         * Block during client construction until local feature flags have been fetched.
+         *
+         * <p>This ensures feature flags are available immediately after the client is built.
+         * If the fetch fails or times out, construction still succeeds but feature flag
+         * evaluations will return {@link FeatureFlagState#DISABLED} until the next successful fetch.</p>
+         *
+         * <p>Requires a personal API key to be set via {@link #personalApiKey(String)}.</p>
+         *
+         * @param timeout Maximum time to wait for the fetch to complete
+         * @return this builder
+         */
+        @Contract(pure = true)
+        public @NotNull Builder blockUntilLocalFlagsLoaded(@NotNull Duration timeout) {
+            this.blockUntilLocalFlagsLoaded = Objects.requireNonNull(timeout);
+            return this;
+        }
+
         @Contract(pure = true)
         public @NotNull Builder exceptionMiddleware(@NotNull BiFunction<Throwable, JsonObject, Boolean> exceptionMiddleware) {
             this.exceptionMiddleware = Objects.requireNonNull(exceptionMiddleware);
@@ -483,7 +502,7 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
                     .disableJdkUnsafe()
                     .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
                     .create());
-            return new PostHogClientImpl(
+            var client = new PostHogClientImpl(
                     gson,
                     endpoint, projectApiKey, personalApiKey, // API
                     flushInterval, maxBatchSize, defaultEventProperties, // Events
@@ -492,6 +511,10 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
                     featureFlagsPollingInterval, featureFlagsRequestTimeout,
                     exceptionMiddleware // Exceptions
             );
+            if (blockUntilLocalFlagsLoaded != null) {
+                client.awaitFeatureFlags(blockUntilLocalFlagsLoaded);
+            }
+            return client;
         }
     }
 
