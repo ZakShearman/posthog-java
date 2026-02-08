@@ -202,6 +202,12 @@ public final class PostHogClientImpl implements PostHogClient {
             }
         }
 
+        // This occurs when local flags are not loaded and remote eval is disabled, so we return disabled
+        // If a client wants, they can block until local values are loaded with PostHogClient#awaitFeatureFlags
+        if (result == null) {
+            return FeatureFlagState.DISABLED;
+        }
+
         // Send feature flag called event if configured to do so.
         final boolean sendCalledEvent = featureFlagContext.sendFeatureFlagEvents() != null
                 ? featureFlagContext.sendFeatureFlagEvents()
@@ -270,19 +276,32 @@ public final class PostHogClientImpl implements PostHogClient {
         this.featureFlagFetchTimer.wakeup();
     }
 
+    @Override
+    public boolean awaitFeatureFlags(@NotNull Duration timeout) {
+        if (this.personalApiKey == null)
+            throw new UnsupportedOperationException("Local feature flag evaluation is not enabled (no personal API key)");
+        return loadRemoteFeatureFlags(timeout);
+    }
+
     @Blocking
     private void loadRemoteFeatureFlags() {
-        if (this.personalApiKey == null) return; // Sanity check
+        loadRemoteFeatureFlags(featureFlagsRequestTimeout);
+    }
+
+    @Blocking
+    private boolean loadRemoteFeatureFlags(@NotNull Duration timeout) {
+        if (this.personalApiKey == null) return false; // Sanity check
 
         final HttpRequest req = HttpRequest.newBuilder(URI.create(String.format("%s/api/feature_flag/local_evaluation", endpoint)))
                 .header("Authorization", String.format("Bearer %s", this.personalApiKey))
                 .header("User-Agent", USER_AGENT)
-                .timeout(featureFlagsRequestTimeout)
+                .timeout(timeout)
                 .build();
         try {
             final HttpResponse<String> res = this.httpClient.send(req, HttpResponse.BodyHandlers.ofString());
             if (res.statusCode() != 200) {
                 log.error("unexpected response from /api/feature_flag/local_evaluation ({}): {}", res.statusCode(), res.body());
+                return false;
             }
 
             final FeatureFlagsResponse resBody = this.gson.fromJson(res.body(), FeatureFlagsResponse.class);
@@ -291,13 +310,17 @@ public final class PostHogClientImpl implements PostHogClient {
                 newFeatureFlags.put(flag.key(), flag);
             }
             this.featureFlags = Map.copyOf(newFeatureFlags);
+            return true;
         } catch (InterruptedException ignored) {
             // Do nothing just exit
+            return false;
         } catch (HttpTimeoutException e) {
             log.warn("timed out making /api/feature_flag/local_evaluation request", e);
+            return false;
         } catch (Exception e) {
             // Catch everything because we do not want the timer itself to stop running.
             log.error("failed to make /api/feature_flag/local_evaluation request", e);
+            return false;
         }
     }
 

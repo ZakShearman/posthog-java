@@ -38,6 +38,11 @@ final class PostHogClientNoop implements PostHogClient {
     }
 
     @Override
+    public boolean awaitFeatureFlags(@NotNull Duration timeout) {
+        return true;
+    }
+
+    @Override
     public void captureException(@NotNull Throwable throwable, @Nullable String distinctId, @Nullable Object properties) {
         
     }
