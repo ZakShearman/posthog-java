@@ -339,13 +339,27 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
      *
      * <p>This is useful during application startup to ensure feature flags are available
      * before accepting requests. If it fails, local evals are disabled until it re-fetches (and it succeeds).
+     * <p>
+     * Uses the timeout of {@link #loadRemoteFeatureFlags(Duration)}
+     *
+     * @return true if feature flags were successfully loaded, false if the fetch failed or timed out
+     * @throws UnsupportedOperationException if local feature flag evaluation is not enabled
+     */
+    @Blocking
+    boolean loadRemoteFeatureFlags();
+
+    /**
+     * Blocks until local feature flags have been fetched, or the timeout is reached.
+     *
+     * <p>This is useful during application startup to ensure feature flags are available
+     * before accepting requests. If it fails, local evals are disabled until it re-fetches (and it succeeds).
      *
      * @param timeout Maximum time to wait for the fetch to complete
      * @return true if feature flags were successfully loaded, false if the fetch failed or timed out
      * @throws UnsupportedOperationException if local feature flag evaluation is not enabled
      */
     @Blocking
-    boolean awaitFeatureFlags(@NotNull Duration timeout);
+    boolean loadRemoteFeatureFlags(@NotNull Duration timeout);
 
 
     // Exceptions
@@ -512,7 +526,7 @@ public sealed interface PostHogClient permits PostHogClientImpl, PostHogClientNo
                     exceptionMiddleware // Exceptions
             );
             if (blockUntilLocalFlagsLoaded != null) {
-                client.awaitFeatureFlags(blockUntilLocalFlagsLoaded);
+                client.loadRemoteFeatureFlags(blockUntilLocalFlagsLoaded);
             }
             return client;
         }

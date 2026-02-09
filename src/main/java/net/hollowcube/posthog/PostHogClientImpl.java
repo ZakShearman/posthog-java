@@ -283,21 +283,16 @@ public final class PostHogClientImpl implements PostHogClient {
         this.featureFlagFetchTimer.wakeup();
     }
 
-    @Override
-    public boolean awaitFeatureFlags(@NotNull Duration timeout) {
-        if (this.personalApiKey == null)
+    @Blocking
+    public boolean loadRemoteFeatureFlags() {
+        return this.loadRemoteFeatureFlags(featureFlagsRequestTimeout);
+    }
+
+    @Blocking
+    public boolean loadRemoteFeatureFlags(@NotNull Duration timeout) {
+        if (this.personalApiKey == null) {
             throw new UnsupportedOperationException("Local feature flag evaluation is not enabled (no personal API key)");
-        return loadRemoteFeatureFlags(timeout);
-    }
-
-    @Blocking
-    private void loadRemoteFeatureFlags() {
-        loadRemoteFeatureFlags(featureFlagsRequestTimeout);
-    }
-
-    @Blocking
-    private boolean loadRemoteFeatureFlags(@NotNull Duration timeout) {
-        if (this.personalApiKey == null) return false; // Sanity check
+        }
 
         final HttpRequest req = HttpRequest.newBuilder(URI.create(String.format("%s/api/feature_flag/local_evaluation", endpoint)))
                 .header("Authorization", String.format("Bearer %s", this.personalApiKey))
