@@ -204,13 +204,13 @@ public final class PostHogClientImpl implements PostHogClient {
         }
 
         // This occurs when local flags are not loaded and remote eval is disabled, so we return disabled
-        // If a client wants, they can block until local values are loaded with PostHogClient#awaitFeatureFlags
+        // If a client wants, they can block until local values are loaded with PostHogClient#loadRemoteFeatureFlags
         if (result == null) {
             if (!warnedAboutMissingFlags) {
                 warnedAboutMissingFlags = true;
                 log.warn("Local feature flags not yet loaded and remote evaluation is disabled. " +
                         "Returning DISABLED for all flags until loaded. " +
-                        "Use awaitFeatureFlags() or blockUntilLocalFlagsLoaded() to avoid this.");
+                        "Use loadRemoteFeatureFlags() or blockUntilLocalFlagsLoaded() to avoid this.");
             }
             return FeatureFlagState.DISABLED;
         }

@@ -299,8 +299,8 @@ public final class PostHog {
      * @throws UnsupportedOperationException if local feature flag evaluation is not enabled
      */
     @Blocking
-    public static boolean awaitFeatureFlags(@NotNull Duration timeout) {
-        return getClient().awaitFeatureFlags(timeout);
+    public static boolean loadRemoteFeatureFlags(@NotNull Duration timeout) {
+        return getClient().loadRemoteFeatureFlags(timeout);
     }
 
     // Exceptions
